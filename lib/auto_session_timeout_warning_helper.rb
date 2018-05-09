@@ -1,60 +1,35 @@
 module AutoSessionTimeoutWarningHelper
   def auto_session_timeout_js(options={})
     frequency = options[:frequency] || 60
-    timeout = options[:timeout] || 60
     start = options[:start] || 60
-    warning = options[:warning] || 20
+    warning = options[:warning] || options[:timeout] - 120
     code = <<JS
-if(typeof(jQuery) != 'undefined'){
-  $("#logout_dialog").dialog({
-    modal: true,
-    width: 500,
-    height: 180,
-    autoOpen: false,
-    dialogClass: "no-close"
-  });
-
-  $(".logout_dialog").click(function (e) {
-    e.preventDefault();
-
-    $("#logout_dialog").dialog('option', 'buttons', 
-      [
-        {
-          text: "Continue",
-          icons: {
-            primary: "ui-icon-heart"
-          },
-          click: function () {
-            window.location.reload();
-          }
-        }
-      ]
-    );
-
-    $("#logout_dialog").dialog("open");
-
-  });
-
   function PeriodicalQuery() {
+console.debug('in PeriodicalQuery ' + (new Date()).toString());
     $.ajax({
-      url: '/active',
-      success: function(data) {
-        if(new Date(data.timeout).getTime() < (new Date().getTime() + #{warning} * 1000)){
-          showDialog();
-        }
-        if(data.live == false){
-          window.location.href = '/timeout';
-        }
+      url: '/active'
+    }).done(function(data) {
+console.debug('  ajax came back with ' + data);
+      if (new Date(data.timeout).getTime() < (new Date().getTime() + #{warning} * 1000)) {
+        $('#timeoutWarningModal').modal('show');
       }
-    });
-    setTimeout(PeriodicalQuery, (#{frequency} * 1000));
-  }
-  setTimeout(PeriodicalQuery, (#{start} * 1000));
+      if (!data.live) {
+        console.debug('  data.live == false, so we should be redirecting to /timeout');
+        window.location.href = '/timeout';
+      }
 
-  function showDialog(){
-    $('.logout_dialog').trigger('click');
+    }).always(function() {
+      setTimeout(PeriodicalQuery, (#{frequency} * 1000));
+    });
   }
-}
+
+  // make sure we only start looping once
+  var _auto_session_timout_initialized;
+  if (!_auto_session_timout_initialized) {
+console.debug('kicking off first call to PeriodicalQuery');
+    setTimeout(PeriodicalQuery, (#{start} * 1000));
+    _auto_session_timout_initialized = true;
+  }
 JS
     javascript_tag(code)
   end
@@ -65,13 +40,28 @@ JS
     default_message = "You are about to be logged out due to inactivity.<br/><br/>Please click &lsquo;Continue&rsquo; to stay logged in."
     html_message = options[:message] || default_message
     warning_title = options[:title] || "Logout Warning"
-    warning_classes = !!(options[:classes]) ? ' class="' + options[:classes] + '"' : ''
+    warning_classes = !!(options[:classes]) ? options[:classes] : ''
 
     # Marked .html_safe -- Passed strings are output directly to HTML!
-    "<div id='logout_dialog' title='#{warning_title}' style='display:none;'#{warning_classes}>
-      #{html_message}
+
+"    <!-- Modal -->
+<div class='modal fade #{warning_classes}' id='timeoutWarningModal' tabindex='-1' role='dialog' aria-labelledby='myModalLabel'>
+  <div class='modal-dialog' role='document'>
+    <div class='modal-content'>
+      <div class='modal-header'>
+        <button type='button' class='close' data-dismiss='modal' aria-label='Close'><span aria-hidden='true'>&times;</span></button>
+        <h4 class='modal-title' id='myModalLabel'>#{warning_title}</h4>
+      </div>
+      <div class='modal-body'>
+        #{html_message}
+      </div>
+      <div class='modal-footer'>
+        <button type='button' class='btn btn-default btn-timeout-warning-continue' data-dismiss='modal'>Continue</button>
+      </div>
     </div>
-    <div class='logout_dialog'></div>".html_safe
+  </div>
+</div>".html_safe
+
   end
 end
 

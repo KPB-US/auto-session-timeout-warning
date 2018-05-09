@@ -2,13 +2,14 @@ module AutoSessionTimeoutWarning
 
   def self.included(controller)
     controller.extend ClassMethods
-    controller.hide_action :render_auto_session_timeout
   end
 
   module ClassMethods
     def auto_session_timeout(seconds=nil)
-      prepend_before_filter do |c|
+      prepend_before_action do |c|
+
         if c.session[:auto_session_expires_at] && c.session[:auto_session_expires_at] < Time.now
+          Rails.logger.debug("---- AUTO SESSION TIMEOUT IS RESETTING SESSION ----")
           c.send :before_timedout
           c.send :reset_session
         else
@@ -38,7 +39,7 @@ module AutoSessionTimeoutWarning
 
   def render_session_timeout
     flash[:notice] = "Your session has timed out."
-    redirect_to "/login"
+    redirect_to "/users/sign_in"
   end
 
 end
