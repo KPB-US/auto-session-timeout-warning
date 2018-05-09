@@ -56,7 +56,7 @@ JS
         #{html_message}
       </div>
       <div class='modal-footer'>
-        <button type='button' class='btn btn-default btn-timeout-warning-continue' data-dismiss='modal' onclick="window.location.reload()">Continue</button>
+        <button type='button' class='btn btn-default btn-timeout-warning-continue' data-dismiss='modal' onclick='window.location.reload()'>Continue</button>
       </div>
     </div>
   </div>
