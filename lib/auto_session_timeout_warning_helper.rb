@@ -24,11 +24,11 @@ console.debug('  ajax came back with ' + data);
   }
 
   // make sure we only start looping once
-  var _auto_session_timout_initialized;
-  if (!_auto_session_timout_initialized) {
+  var _auto_session_timeout_initialized;
+  if (!_auto_session_timeout_initialized) {
 console.debug('kicking off first call to PeriodicalQuery');
     setTimeout(PeriodicalQuery, (#{start} * 1000));
-    _auto_session_timout_initialized = true;
+    _auto_session_timeout_initialized = true;
   }
 JS
     javascript_tag(code)
@@ -56,7 +56,7 @@ JS
         #{html_message}
       </div>
       <div class='modal-footer'>
-        <button type='button' class='btn btn-default btn-timeout-warning-continue' data-dismiss='modal'>Continue</button>
+        <button type='button' class='btn btn-default btn-timeout-warning-continue' data-dismiss='modal' onclick="window.location.reload()">Continue</button>
       </div>
     </div>
   </div>
